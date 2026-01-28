@@ -1,0 +1,72 @@
+name: inference_tests
+
+# CINTENT >> MANUAL_TRIGGER
+# on:
+#   push:
+#     branches:
+#       - main
+#   pull_request:
+#     types: [opened, synchronize, reopened]
+on: [repository_dispatch, workflow_dispatch]
+
+jobs:
+  # CINTENT >> NO_TRACEES
+  # check_skip:
+  #   runs-on: ubuntu-latest
+  #   if: "! contains(github.event.head_commit.message, '[ci skip]')"
+  #   steps:
+  #     - run: echo "${{ github.event.head_commit.message }}"
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # CINTENT >> REMOVE_MATRIX
+        # python-version: [3.9, "3.10", "3.11"]
+        python-version: ["3.11"]
+        experimental: [false]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          architecture: x64
+          # CINTENT >> REMOVE_CACHE
+          # cache: 'pip'
+          # cache-dependency-path: 'requirements*'
+
+      # CINTENT >> INSERT_CINTENT
+      - uses: JavidDitty/setup-cintent@3e5b2faf83a2ad32c22a1cd0f86f5f20ea53a5ab
+
+      - name: check OS
+        run: cat /etc/os-release
+      - name: set ENV
+        run: |
+          export TRAINER_TELEMETRY=0
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends git make gcc
+          sudo apt-get install espeak-ng
+          make system-deps
+      - name: Install/upgrade Python setup deps
+        run: python3 -m pip install --upgrade pip setuptools wheel
+      - name: Replace scarf urls
+        run: |
+          sed -i 's/https:\/\/coqui.gateway.scarf.sh\//https:\/\/github.com\/coqui-ai\/TTS\/releases\/download\//g' TTS/.models.json
+      - name: Install TTS
+        run: |
+          python3 -m pip install .[all]
+          python3 setup.py egg_info
+      - name: Unit tests
+        run: make inference_tests
+        
+      # CINTENT >> INSERT_CINTENT
+      - name: Upload CIntent Artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ${{ env.CINTENT_ARTIFACT_NAME }}
+          path: ${{ env.CINTENT_LOGS }}
