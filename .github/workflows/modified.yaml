@@ -38,7 +38,9 @@ jobs:
           # cache-dependency-path: 'requirements*'
 
       # CINTENT >> INSERT_CINTENT
-      - uses: JavidDitty/setup-cintent@3e5b2faf83a2ad32c22a1cd0f86f5f20ea53a5ab
+      - uses: JavidDitty/setup-cintent@3638849e94bdb037f0a405375686a8550e6df904
+        with:
+          nonblocking: true
 
       - name: check OS
         run: cat /etc/os-release
