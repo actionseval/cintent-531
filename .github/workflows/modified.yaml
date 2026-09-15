@@ -45,6 +45,11 @@ jobs:
       #   with:
       #     profiler: "setprofile"
 
+      # CINTENT >> INSERT_MINIMIZER
+      - name: Minimize Test Cases
+        run: |
+          python3 pytest_instrumenter.py -t "tests/inference_tests/test_synthesizer.py,28"
+
       - name: check OS
         run: cat /etc/os-release
       - name: set ENV
